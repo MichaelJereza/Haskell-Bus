@@ -18,14 +18,22 @@ data Command = Halt Stop
 data Task = Run Route
           | While Status Route
           | If Status Route Route
---handleTasks :: Bus->[Task]->Bus
---handleTasks bus [] = bus
---handleTasks bus (task:s) = case task of
---                         Run route -> handleTasks (schedule bus route) s
---                         While condition route -> case (condition bus) of 
---                                                  True -> handleTasks (schedule bus route) (task:s)
- --                                                 False -> handleTasks (schedule bus route) (task:s)
-   --                      If status t e-> if status then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
+
+
+
+-- | FIX THIS | --
+handleTasks :: Bus->[Task]->Bus
+handleTasks bus [] = bus
+handleTasks bus ((Run route):s) = handleTasks (schedule bus route) s
+handleTasks bus ((While condition route):s) = case (condition bus) of
+                                              True -> handleTasks (schedule bus route) ((While condition route):s)
+                                              False -> handleTasks (schedule bus route) s
+handleTasks bus ((If status t e):s) = if (status bus) then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
+
+
+exampleTasks :: Bus
+exampleTasks = handleTasks (0, 20) [Run exampleRoute, While busFull exampleRoute ]
+
 
 -- | Exchange the passengers from stop and bus capacity.
 performStop :: Stop->Bus->Bus
@@ -53,6 +61,10 @@ busFull (passengers, max) = if passengers == max then True else False
 -- Is the bus empty?
 busEmpty :: Bus -> Bool
 busEmpty (passengers, max) = if passengers == 0 then True else False
+
+-- Are there passengers on the bus?
+busHasPassengers :: Bus -> Bool
+busHasPassengers (passengers, max) = if passengers > 0 then True else False
 
 -- Do passenger exchanges make sense?
 busHandle :: Bus -> Capacity -> Bool

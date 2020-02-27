@@ -21,7 +21,6 @@ data Task = Run Route
 
 
 
--- | FIX THIS | --
 handleTasks :: Bus->[Task]->Bus
 handleTasks bus [] = bus
 handleTasks bus ((Run route):s) = handleTasks (schedule bus route) s
@@ -30,9 +29,6 @@ handleTasks bus ((While condition route):s) = case (condition bus) of
                                               False -> handleTasks (schedule bus route) s
 handleTasks bus ((If status t e):s) = if (status bus) then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
 
-
-exampleTasks :: Bus
-exampleTasks = handleTasks (0, 20) [Run exampleRoute, While busFull exampleRoute ]
 
 
 -- | Exchange the passengers from stop and bus capacity.
@@ -66,6 +62,9 @@ busEmpty (passengers, max) = if passengers == 0 then True else False
 busHasPassengers :: Bus -> Bool
 busHasPassengers (passengers, max) = if passengers > 0 then True else False
 
+busHasRoom :: Bus -> Bool
+busHasRoom (passengers, max) = if passengers < max then True else False
+
 -- Do passenger exchanges make sense?
 busHandle :: Bus -> Capacity -> Bool
 busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && (passengers + netchange >= 0) ) then True else False
@@ -74,10 +73,13 @@ busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && 
 
 -- | Testing examples
 exampleRoute :: Route
-exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Gain 1)), Go 20, Halt ("Street C", (Loss 1))]
+exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Gain 5)), Go 20, Halt ("Street C", (Loss 1))]
 
 exampleRoute2 :: Route
 exampleRoute2 = [Halt ("Street D", (Loss 1))]
 
 exampleRun1 :: Bus
 exampleRun1 = schedule (0, 30) exampleRoute
+
+exampleTasks :: Bus
+exampleTasks = handleTasks (0, 20) [Run exampleRoute, While busHasPassengers exampleRoute2 ]

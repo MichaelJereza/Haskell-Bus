@@ -1,31 +1,31 @@
 module Bus where
 
-type Status = Bool
+type Status = (Bus->Bool)
 type Miles = Float
 type Capacity = Int
 type Name = [Char]
 type Bus = (Capacity, Capacity)
 
 type Stop = (Name, Exchange)
+type Route = [Command]
 
 data Exchange  = Gain Capacity 
                | Loss Capacity
                deriving(Eq,Show)
-data Route = Halt Stop
-           | Go Miles
-           deriving(Eq,Show)
-data Task = Run [Route]
-          | While Status [Route]
-          | If Status [Route] [Route]
-          deriving(Eq,Show)
-handleTasks :: Bus->[Task]->Bus
-handleTasks bus [] = bus
-handleTasks bus (task:s) = case task of
-                         Run route -> handleTasks (schedule bus route) s
+data Command = Halt Stop
+             | Go Miles
+             deriving(Eq,Show)
+data Task = Run Route
+          | While Status Route
+          | If Status Route Route
+--handleTasks :: Bus->[Task]->Bus
+--handleTasks bus [] = bus
+--handleTasks bus (task:s) = case task of
+--                         Run route -> handleTasks (schedule bus route) s
 --                         While condition route -> case (condition bus) of 
 --                                                  True -> handleTasks (schedule bus route) (task:s)
---                                                  False -> handleTasks (schedule bus route) (task:s)
---                         If status t e-> if status then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
+ --                                                 False -> handleTasks (schedule bus route) (task:s)
+   --                      If status t e-> if status then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
 
 -- | Exchange the passengers from stop and bus capacity.
 performStop :: Stop->Bus->Bus
@@ -35,8 +35,8 @@ performStop (name, exchange) (passengers, max) = case exchange of
 
 
 
--- | Bus handles each stop in a [Route].
-schedule :: Bus -> [Route] -> Bus 
+-- | Bus handles each stop in a Route.
+schedule :: Bus -> Route -> Bus 
 schedule bus [] = bus
 schedule bus (r:oute) = case r of
                         Halt stop   -> schedule (performStop stop bus) oute
@@ -61,10 +61,10 @@ busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && 
 
 
 -- | Testing examples
-exampleRoute :: [Route]
+exampleRoute :: Route
 exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Gain 1)), Go 20, Halt ("Street C", (Loss 1))]
 
-exampleRoute2 :: [Route]
+exampleRoute2 :: Route
 exampleRoute2 = [Halt ("Street D", (Loss 1))]
 
 exampleRun1 :: Bus

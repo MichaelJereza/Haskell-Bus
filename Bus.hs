@@ -83,3 +83,9 @@ exampleRun1 = schedule (0, 30) exampleRoute
 
 exampleTasks :: Bus
 exampleTasks = handleTasks (0, 20) [Run exampleRoute, While busHasPassengers exampleRoute2 ]
+
+exampleFail1 :: Bus
+exampleFail1 = schedule (5, 10) [Go 5, Halt ("Street A", (Gain 10))]
+
+exampleFail2 :: Bus
+exampleFail2 = schedule (0, 5) [Go 5, Halt ("Street Fart", (Loss 1))]

@@ -1,25 +1,35 @@
 module Bus where
 
+type Status = Bool
 type Miles = Float
 type Capacity = Int
 type Name = [Char]
 type Bus = (Capacity, Capacity)
 
-data Stop = Gain Capacity 
-          | Loss Capacity
-          deriving(Eq,Show)
+type Stop = (Name, Exchange)
+
+data Exchange  = Gain Capacity 
+               | Loss Capacity
+               deriving(Eq,Show)
 data Route = Halt Stop
            | Go Miles
            deriving(Eq,Show)
-
---data Task = Run Bus
---          | Def Bus
---          | Map [Route]        
---handleTasks :: [Task]->Bus
+data Task = Run [Route]
+          | While Status [Route]
+          | If Status [Route] [Route]
+          deriving(Eq,Show)
+handleTasks :: Bus->[Task]->Bus
+handleTasks bus [] = bus
+handleTasks bus (task:s) = case task of
+                         Run route -> handleTasks (schedule bus route) s
+--                         While condition route -> case (condition bus) of 
+--                                                  True -> handleTasks (schedule bus route) (task:s)
+--                                                  False -> handleTasks (schedule bus route) (task:s)
+--                         If status t e-> if status then handleTasks (schedule bus t) s else handleTasks (schedule bus e) s
 
 -- | Exchange the passengers from stop and bus capacity.
 performStop :: Stop->Bus->Bus
-performStop stop (passengers, max) = case stop of
+performStop (name, exchange) (passengers, max) = case exchange of
                        Gain cap -> if (busHandle (passengers, max) cap) then (passengers+cap, max) else (max, max)
                        Loss cap -> if (busHandle (passengers, max) (-cap)) then (passengers-cap, max) else (0, max)
 
@@ -52,7 +62,10 @@ busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && 
 
 -- | Testing examples
 exampleRoute :: [Route]
-exampleRoute = [Go 15, Halt (Gain 1), Go 5, Halt (Gain 10), Go 20, Halt (Loss 5)]
+exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Gain 1)), Go 20, Halt ("Street C", (Loss 1))]
+
+exampleRoute2 :: [Route]
+exampleRoute2 = [Halt ("Street D", (Loss 1))]
 
 exampleRun1 :: Bus
 exampleRun1 = schedule (0, 30) exampleRoute

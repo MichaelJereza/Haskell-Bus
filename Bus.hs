@@ -22,27 +22,37 @@ data Task = Run Route
 
 -- | This is the main wrapper for handling tasks and running the program.
 displayTasks :: Bus->[Task]->IO ()
-displayTasks bus tasks = putStrLn ("Starting: " ++ show bus ++ "." ++ handleTasks bus tasks)
+displayTasks bus tasks = putStrLn ("\nStarting: " ++ show bus ++ ".\n" ++ handleTasks bus tasks)
 
 
 
 -- | Iterates through Task list and returns strings of operations.
 handleTasks :: Bus->[Task]->String
-handleTasks bus [] = "\nFinished: " ++ show bus ++ "."
+handleTasks bus [] = "\n\nFinished: " ++ show bus ++ ".\n"
 handleTasks bus ((Run route):s) = case schedule bus route of 
-                                  bus' -> "\nRan route: " ++ show bus' ++ "." ++ handleTasks (schedule bus route) s
+                                  bus' -> "\nRunning route: " ++ rootInfo route ++ "\nBus: " ++ show bus' ++ "." ++ handleTasks (schedule bus route) s
 handleTasks bus ((While condition task):s) = case (condition bus) of
-                                              True -> "\nWhile: True..." ++ handleTasks bus (task:(While condition task):s)
-                                              False -> "\nWhile: False..." ++ handleTasks bus s
-handleTasks bus ((If status t e):s) = if (status bus) then "\nIf: True..." ++ handleTasks bus (t:s) else "\nIf: False..." ++ handleTasks bus (e:s)
+                                             True  -> "\nWhile: True..." ++ handleTasks bus (task:(While condition task):s)
+                                             False -> "\nWhile: False..." ++ handleTasks bus s
+handleTasks bus ((If status t e):s) = if (status bus) then "\nIf: True..." ++ handleTasks bus (t:s) 
+                                                      else "\nIf: False..." ++ handleTasks bus (e:s)
+
+
+-- | Return a string representing a route.
+rootInfo :: Route->String
+rootInfo [] = ""
+rootInfo (r:oute) = case r of
+                    Halt (name, exchange) -> name ++ ": " ++ show exchange ++ ", " ++ rootInfo oute
+                    Go miles              -> "drove " ++ show miles ++ " miles, " ++ rootInfo oute
+
 
 
 
 -- | Exchange the passengers from stop and bus capacity.
 performStop :: Stop->Bus->Bus
 performStop (name, exchange) (passengers, max) = case exchange of
-                       Gain cap -> if (busHandle (passengers, max) cap) then (passengers+cap, max) else (max, max)
-                       Loss cap -> if (busHandle (passengers, max) (-cap)) then (passengers-cap, max) else (0, max)
+            Gain cap -> if (busHandle (passengers, max) cap) then (passengers+cap, max) else (max, max)
+            Loss cap -> if (busHandle (passengers, max) (-cap)) then (passengers-cap, max) else (0, max)
 
 
 
@@ -84,7 +94,7 @@ exampleRoute :: Route
 exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Loss 1)), Go 20, Halt ("Street C", (Gain 5))]
 -- Lose 1
 exampleRoute2 :: Route
-exampleRoute2 = [Halt ("Street D", (Loss 1))]
+exampleRoute2 = [Go 0.5, Halt ("Street D", (Loss 1))]
 
 exampleRun1 :: Bus
 exampleRun1 = schedule (0, 30) exampleRoute
@@ -100,6 +110,7 @@ exampleTask2 = displayTasks (1, 20) [While busHasPassengers (If busFull (While b
 -- An example of a failure, looping forever.
 infiniteTask :: IO ()
 infiniteTask = displayTasks (20, 20) [While busHasPassengers (If busFull (Run exampleRoute2)(Run exampleRoute))]
+
 
 exampleFail1 :: Bus
 exampleFail1 = schedule (5, 10) [Go 5, Halt ("Street A", (Gain 10))]

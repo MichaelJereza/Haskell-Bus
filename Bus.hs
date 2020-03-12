@@ -46,11 +46,11 @@ handleTasks bus ((While condition task):s) env = case (condition bus) of
 handleTasks bus ((If status t e):s) env = if (status bus) then "\nIf: True..." ++ handleTasks bus (t:s) env
                                                       else "\nIf: False..." ++ handleTasks bus (e:s) env
 handleTasks bus ((Create name route):s) env = case getVar name env of
-                                              Just _ -> "\nFailed creating " ++ name ++ ", variables already exists!"
+                                              Just _  -> "\nFailed creating " ++ name ++ ", variables already exists!"
                                               Nothing -> "\nCreated " ++ name ++ "." ++ handleTasks bus s (env++[createVar name route])
 handleTasks bus ((Use name):s) env = case getVar name env of
                                      Just route -> "\nRunning variable: " ++ name ++ "." ++ handleTasks bus ((Run route):s) env
-                                     Nothing -> "\nVariable " ++ name ++ " does not exist!"
+                                     Nothing    -> "\nVariable " ++ name ++ " does not exist!"
 
 
 
@@ -76,7 +76,6 @@ rootInfo (r:oute) = case r of
 
 
 
-
 -- | Exchange the passengers from stop and bus capacity.
 performStop :: Stop->Bus->Bus
 performStop (name, exchange) (passengers, max) = case exchange of
@@ -94,7 +93,7 @@ schedule bus (r:oute) = case r of
 
 
 
--- | Functions about Bus state
+-- | Status functions
 --
 -- Is the bus full?
 busFull :: Bus -> Bool
@@ -118,39 +117,63 @@ busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && 
 
 
 -- | Testing examples
+--
 -- Gain 5
 exampleRoute :: Route
 exampleRoute = [Go 15, Halt ("Stop A", (Gain 1)), Go 5, Halt ("Stop B", (Loss 1)), Go 20, Halt ("Stop C", (Gain 5))]
+
+
+
 -- Lose 1
 exampleRoute2 :: Route
 exampleRoute2 = [Go 0.5, Halt ("Stop D", (Loss 1))]
 
+
+
 exampleRun1 :: Bus
 exampleRun1 = schedule (0, 30) exampleRoute
+
+
 
 -- Fills 5 passengers, loops emptying 1 passenger at a time
 exampleTask1 :: IO ()
 exampleTask1 = displayTasks (0, 20) [Run exampleRoute, While busHasPassengers (Run exampleRoute2) ]
 
+
+
+
 -- Fills bus, then loops emptying 1 passenger at a time
 exampleTask2 :: IO ()
 exampleTask2 = displayTasks (1, 20) [While busHasPassengers (If busFull (While busHasPassengers (Run exampleRoute2)) (Run exampleRoute))] 
+
+
+
 
 -- Defines "myroute" route
 exampleVariable1 :: IO ()
 exampleVariable1 = displayTasks (1, 20) [Create "myroute" [Go 15, Halt ("Stop Z", (Gain 1)), Go 3.5], While busHasRoom (Use "myroute")] 
 
+
+
 -- Defines "myroute" and "youroute"
 exampleVariable2 :: IO ()
 exampleVariable2 = displayTasks (1, 20) [Create "myroute" [Go 15, Halt ("Stop Z", (Gain 1)), Go 3.5], Create "youroute" [Go 1.2, Halt ("Stop X", (Loss 1)), Go 0.2], While busHasRoom (Use "myroute"), While busHasPassengers (Use "youroute")] 
 
+
+
+-- Shows failing variable definition
 badVariable :: IO ()
 badVariable =  displayTasks (1, 20) [Create "myroute" [Go 15, Halt ("Stop Z", (Gain 1)), Go 3.5], Create "myroute" [Go 1.2, Halt ("Stop X", (Loss 1)), Go 0.2], If busHasRoom (Use "myroute") (Run exampleRoute)]
+
+
 
 -- An example of a failure, looping forever.
 infiniteTask :: IO ()
 infiniteTask = displayTasks (20, 20) [While busHasPassengers (If busFull (Run exampleRoute2)(Run exampleRoute))]
 
+
+
+-- Shows safety mechanism preventing over & under loading
 exampleFail1 :: Bus
 exampleFail1 = schedule (5, 10) [Go 5, Halt ("Stop A", (Gain 10))]
 

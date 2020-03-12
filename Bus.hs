@@ -91,10 +91,10 @@ busHandle (passengers, max) netchange = if ( (passengers + netchange <= max) && 
 -- | Testing examples
 -- Gain 5
 exampleRoute :: Route
-exampleRoute = [Go 15, Halt ("Street A", (Gain 1)), Go 5, Halt ("Street B", (Loss 1)), Go 20, Halt ("Street C", (Gain 5))]
+exampleRoute = [Go 15, Halt ("Stop A", (Gain 1)), Go 5, Halt ("Stop B", (Loss 1)), Go 20, Halt ("Stop C", (Gain 5))]
 -- Lose 1
 exampleRoute2 :: Route
-exampleRoute2 = [Go 0.5, Halt ("Street D", (Loss 1))]
+exampleRoute2 = [Go 0.5, Halt ("Stop D", (Loss 1))]
 
 exampleRun1 :: Bus
 exampleRun1 = schedule (0, 30) exampleRoute
@@ -113,7 +113,7 @@ infiniteTask = displayTasks (20, 20) [While busHasPassengers (If busFull (Run ex
 
 
 exampleFail1 :: Bus
-exampleFail1 = schedule (5, 10) [Go 5, Halt ("Street A", (Gain 10))]
+exampleFail1 = schedule (5, 10) [Go 5, Halt ("Stop A", (Gain 10))]
 
 exampleFail2 :: Bus
-exampleFail2 = schedule (0, 5) [Go 5, Halt ("Street B", (Loss 1))]
+exampleFail2 = schedule (0, 5) [Go 5, Halt ("Stop B", (Loss 1))]
